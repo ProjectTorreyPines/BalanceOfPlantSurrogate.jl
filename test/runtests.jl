@@ -1,3 +1,4 @@
+using Test
 using BalanceOfPlantSurogate
 
 @testset "BalanceOfPlantSurogate" begin
