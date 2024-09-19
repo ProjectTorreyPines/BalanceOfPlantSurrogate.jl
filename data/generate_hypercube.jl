@@ -91,7 +91,7 @@ function run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::Strin
         @showprogress  map(case -> workflow(hyper_cube.df,case...), hyper_cube.cases)
     end
 
-    CSV.write(joinpath(save_folder,"BalanceOfPlantHypercubeN=$(length(hyper_cube.df.thermal_efficiency_cycle))", hyper_cube.df))
+    CSV.write(joinpath(save_folder,"BalanceOfPlantHypercubeN=$(length(hyper_cube.df.thermal_efficiency_cycle))"), hyper_cube.df)
 
     return hyper_cube
 end
