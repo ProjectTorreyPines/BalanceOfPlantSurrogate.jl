@@ -1,6 +1,7 @@
 using DataFrames
 using FUSE
 using CSV
+using ProgressMeter
 
 
 mutable struct BalanceOfPlantHyperCubee
@@ -8,9 +9,23 @@ mutable struct BalanceOfPlantHyperCubee
     df :: DataFrames.DataFrame
 end
 
-function generate_hypercube(;var_steps=2,cycle_types=[:rankine, :brayton],
+"""
+    generate_hypercube(;var_steps::Int=2,cycle_types::Vector{Symbol}=[:rankine, :brayton],
         power_range=(lower=1e6,upper=1e9),breeder_heat_load_fraction_range=(lower=0.5,upper=0.99),
-        divertor_heat_load_fraction_range=(lower=0.1,upper=0.9))#, wall_heat_load_fraction_range=(lower=0.03,upper=0.9))
+        divertor_heat_load_fraction_range=(lower=0.1,upper=0.9))
+
+Initialize the balance of plant hypercube
+
+    The power to each system is done like:
+        total_power 
+       |          | (1 - breeder_fraction)
+    breeder     div+wall
+                 |     |   (1 - div_fraciton)
+                div   wall
+"""
+function generate_hypercube(;var_steps::Int=2,cycle_types::Vector{Symbol}=[:rankine, :brayton],
+        power_range=(lower=1e6,upper=1e9),breeder_heat_load_fraction_range=(lower=0.5,upper=0.99),
+        divertor_heat_load_fraction_range=(lower=0.1,upper=0.9))
     
     
     df_bop_results = FUSE.DataFrame(cycle_type = Symbol[], total_power=Float64[], breeder_heat_load=Float64[], diverter_heatload=Float64[], wall_heat_load=Float64[], thermal_efficiency_cycle=Float64[])
@@ -59,4 +74,22 @@ function workflow(df_res::DataFrames.DataFrame,cycle_type::Symbol,total_power::F
     return nothing
 end
 
+"""
+    run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::String)
 
+Runs the hypercube with pmap or map depending if you loaded Distributed
+"""
+function run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::String)
+    println()
+    if @isdefined Distributed
+        println("running $(length(hyper_cube.cases)) cases on $(nworkers()) workers")
+        @showprogress  pmap(case -> workflow(hyper_cube.df,case...), hyper_cube.cases)
+    else
+        println("running $(length(hyper_cube.cases)) cases in serial")
+        @showprogress  map(case -> workflow(hyper_cube.df,case...), hyper_cube.cases)
+    end
+
+    CSV.write(joinpath(save_folder,"BalanceOfPlantHypercubeN=$(length(hyper_cube.df.thermal_efficiency_cycle))", hyper_cube.df))
+
+    return hyper_cube
+end
