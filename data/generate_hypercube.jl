@@ -3,7 +3,6 @@ using FUSE
 using CSV
 using ProgressMeter
 
-
 mutable struct BalanceOfPlantHyperCubee
     cases :: AbstractArray
     df :: DataFrames.DataFrame
@@ -53,6 +52,7 @@ function workflow(df_res::DataFrames.DataFrame,cycle_type::Symbol,total_power::F
  
     non_bf = 1. - bf
     
+    act.ActorBalanceOfPlant.model = 
     act.ActorThermalPlant.data_flow_external = [bf * total_power, non_bf * total_power * df, non_bf * total_power * (1. - df)]
     actor_balance_of_plant = FUSE.ActorBalanceOfPlant(dd,act.ActorBalanceOfPlant,act)
 
@@ -85,7 +85,7 @@ function run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::Strin
         println("running $(length(hyper_cube.cases)) cases on $(nworkers()) workers")
         @showprogress  pmap(case -> workflow(hyper_cube.df,case...), hyper_cube.cases)
     else
-        println("running $(length(hyper_cube.cases)) cases in serial")
+        println("running $(length(hyper_cube.cases)) cases serially")
         @showprogress  map(case -> workflow(hyper_cube.df,case...), hyper_cube.cases)
     end
 

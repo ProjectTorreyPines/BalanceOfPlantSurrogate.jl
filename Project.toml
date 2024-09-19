@@ -5,8 +5,4 @@ version = "0.1.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
-FUSE = "e64856f0-3bb8-4376-b4b7-c03396503992"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
-ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"

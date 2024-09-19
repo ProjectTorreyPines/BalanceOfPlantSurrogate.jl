@@ -1,5 +1,7 @@
 module BalanceOfPlantSurogate
 
-include("generate_hypercube.jl")
+const __BalanceOfPlantSurogate__ = abspath(joinpath(@__DIR__, ".."))
+
+include("model.jl")
 
 end # module BalanceOfPlantSurogate
