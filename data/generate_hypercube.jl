@@ -55,7 +55,7 @@ function workflow(df_res::DataFrames.DataFrame,cycle_type::Symbol,total_power::F
     non_bf = 1. - bf
     
     act.ActorThermalPlant.model = :network
-    act.ActorThermalPlant.data_flow_external = [bf * total_power, non_bf * total_power * df, non_bf * total_power * (1. - df)]
+    act.ActorThermalPlant.external_heat_loads = [bf * total_power, non_bf * total_power * df, non_bf * total_power * (1. - df)]
     actor_balance_of_plant = FUSE.ActorBalanceOfPlant(dd,act.ActorBalanceOfPlant,act)
 
     actor_balance_of_plant.thermal_plant_actor.power_cycle_type = cycle_type
