@@ -50,14 +50,18 @@ function workflow(df_res::DataFrames.DataFrame,cycle_type::Symbol,total_power::F
     dd = IMAS.dd()
     act= FUSE.ParametersActors()
     
-    dd.balance_of_plant.power_plant.power_cycle_type = string(cycle_type)
- 
+    bop = dd.balance_of_plant
+
+    bop.time = [0.0]
+    dd.global_time = 0.0
+
     non_bf = 1. - bf
+    @ddtime(bop.power_plant.breeder_heat_load =bf * total_power)
+    @ddtime(bop.power_plant.divertor_heat_load = non_bf * total_power * df)
+    @ddtime (bop.power_plant.wall_heat_load = non_bf * total_power * (1. - df))
+
     
     act.ActorThermalPlant.model = :network
-    act.ActorThermalPlant.external_heat_loads = [bf * total_power, non_bf * total_power * df, non_bf * total_power * (1. - df)]
-    actor_balance_of_plant = FUSE.ActorBalanceOfPlant(dd,act.ActorBalanceOfPlant,act)
-
     actor_balance_of_plant.thermal_plant_actor.power_cycle_type = cycle_type
    
     thermal_eff = 0.0
