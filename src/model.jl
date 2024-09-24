@@ -7,7 +7,7 @@ mutable struct BOPSurogate
     thermal_efficiency
 end
 
-function BOPSurogate(cycle_type::Symbol)
+function BOPSurogate(cycle_type::Symbol;data::String="BalanceOfPlantHypercubeN=16.csv")
     df = DataFrames.DataFrame(CSV.File(joinpath(BalanceOfPlantSurogate.__BalanceOfPlantSurogate__,"data","BalanceOfPlantHypercubeN=16.csv")))
     df = filter(row -> row.cycle_type == string(cycle_type), df)
 
@@ -21,7 +21,7 @@ function BOPSurogate(cycle_type::Symbol)
         thermal_efficiency_cycle[k] = row.thermal_efficiency_cycle
     end
 
-    itp = interpolate((log10.(total_power), breeder_heat_load, diverter_heatload), thermal_efficiency_cycle, Gridded(Linear()))#, Flat()
+    itp = extrapolate(interpolate((log10.(total_power), breeder_heat_load, diverter_heatload), thermal_efficiency_cycle, Gridded(Linear())), Flat())
 
     return BOPSurogate(df, itp)
 end

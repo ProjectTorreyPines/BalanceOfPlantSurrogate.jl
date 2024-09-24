@@ -45,7 +45,7 @@ function log10range(start_value, stop_value, num_points)
 end
 
 
-function workflow(df_res::DataFrames.DataFrame,cycle_type::Symbol,total_power::Float64, bf::Float64, df::Float64)
+function workflow_case(df_res::DataFrames.DataFrame,cycle_type::Symbol,total_power::Float64, bf::Float64, df::Float64)
 
     dd = IMAS.dd()
     act= FUSE.ParametersActors()
@@ -56,12 +56,14 @@ function workflow(df_res::DataFrames.DataFrame,cycle_type::Symbol,total_power::F
     dd.global_time = 0.0
 
     non_bf = 1. - bf
-    @ddtime(bop.power_plant.breeder_heat_load =bf * total_power)
-    @ddtime(bop.power_plant.divertor_heat_load = non_bf * total_power * df)
-    @ddtime (bop.power_plant.wall_heat_load = non_bf * total_power * (1. - df))
+    @ddtime(bop.power_plant.heat_load.breeder =bf * total_power)
+    @ddtime(bop.power_plant.heat_load.divertor = non_bf * total_power * df)
+    @ddtime (bop.power_plant.heat_load.wall = non_bf * total_power * (1. - df))
 
     
     act.ActorThermalPlant.model = :network
+    dd.balance_of_plant.power_plant.power_cycle_type = string(cycle_type)
+    actor_balance_of_plant= FUSE.ActorBalanceOfPlant(dd,act.ActorBalanceOfPlant,act)
     actor_balance_of_plant.thermal_plant_actor.power_cycle_type = cycle_type
    
     thermal_eff = 0.0
@@ -89,10 +91,10 @@ function run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::Strin
     println()
     if @isdefined Distributed
         println("running $(length(hyper_cube.cases)) cases on $(nworkers()) workers")
-        @showprogress  pmap(case -> workflow(hyper_cube.df,case...), hyper_cube.cases)
+        @showprogress  pmap(case -> workflow_case(hyper_cube.df,case...), hyper_cube.cases)
     else
         println("running $(length(hyper_cube.cases)) cases serially")
-        @showprogress  map(case -> workflow(hyper_cube.df,case...), hyper_cube.cases)
+        @showprogress  map(case -> workflow_case(hyper_cube.df,case...), hyper_cube.cases)
     end
 
     CSV.write(joinpath(save_folder,"BalanceOfPlantHypercubeN=$(length(hyper_cube.df.thermal_efficiency_cycle)).csv"), hyper_cube.df)
