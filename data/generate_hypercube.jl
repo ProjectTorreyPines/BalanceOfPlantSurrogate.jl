@@ -7,7 +7,7 @@ FUSE.logging(Logging.Info; actors=Logging.Error);
 
 mutable struct BalanceOfPlantHyperCubee
     cases :: AbstractArray
-    df :: DataFrames.DataFrame
+    df :: Union{DataFrames.DataFrame,Nothing}
 end
 
 """
@@ -22,21 +22,20 @@ Initialize the balance of plant hypercube
        |          | (1 - breeder_fraction)
     breeder     div+wall
                  |     |   (1 - div_fraciton)
-                div   wall
+                div   wallexit()
 """
 function generate_hypercube(;var_steps::Int=2,cycle_types::Vector{Symbol}=[:rankine, :brayton],
         power_range=(lower=1e6,upper=1e9),breeder_heat_load_fraction_range=(lower=0.5,upper=0.99),
         divertor_heat_load_fraction_range=(lower=0.1,upper=0.9))
     
     
-    df_bop_results = FUSE.DataFrame(cycle_type = Symbol[], total_power=Float64[], breeder_heat_load=Float64[], diverter_heatload=Float64[], wall_heat_load=Float64[], thermal_efficiency_cycle=Float64[])
 
     power_scan = log10range(power_range.lower,power_range.upper,var_steps)
     breeder_scan = LinRange(breeder_heat_load_fraction_range.lower , breeder_heat_load_fraction_range.upper, var_steps)
     diverter_scan = LinRange(divertor_heat_load_fraction_range.lower , divertor_heat_load_fraction_range.upper, var_steps)
     
     cases = collect(Iterators.product(cycle_types, power_scan, breeder_scan, diverter_scan))
-    return BalanceOfPlantHyperCubee(cases, df_bop_results)
+    return BalanceOfPlantHyperCubee(cases, nothing)
 end
 
 
@@ -45,7 +44,7 @@ function log10range(start_value, stop_value, num_points)
 end
 
 
-function workflow_case(df_res::DataFrames.DataFrame,cycle_type::Symbol,total_power::Float64, bf::Float64, df::Float64)
+function workflow_case(cycle_type::Symbol,total_power::Float64, bf::Float64, df::Float64)
 
     dd = IMAS.dd()
     act= FUSE.ParametersActors()
@@ -60,26 +59,14 @@ function workflow_case(df_res::DataFrames.DataFrame,cycle_type::Symbol,total_pow
     @ddtime(bop.power_plant.heat_load.divertor = non_bf * total_power * df)
     @ddtime (bop.power_plant.heat_load.wall = non_bf * total_power * (1. - df))
 
-    
     act.ActorThermalPlant.model = :network
     dd.balance_of_plant.power_plant.power_cycle_type = string(cycle_type)
-    actor_balance_of_plant= FUSE.ActorBalanceOfPlant(dd,act.ActorBalanceOfPlant,act)
-    actor_balance_of_plant.thermal_plant_actor.power_cycle_type = cycle_type
+    FUSE.ActorThermalPlant(dd,act)
    
-    thermal_eff = 0.0
-    try
+    thermal_eff_cycle = @ddtime (dd.balance_of_plant.thermal_efficiency_cycle)
+    thermal_eff_plant = @ddtime (dd.balance_of_plant.thermal_efficiency_plant)
 
-        FUSE.finalize(FUSE.step(actor_balance_of_plant))
-        thermal_eff = @ddtime (dd.balance_of_plant.thermal_efficiency_cycle)
-    catch e
-        if isa(e, InterruptException)
-            rethrow(e)
-        end
-        show(e)
-    finally
-        push!(df_res, (cycle_type, total_power, bf, df, 1-df, thermal_eff))
-    end
-    return nothing
+    return (cycle_type, total_power, bf, df, 1 - df, thermal_eff_cycle, thermal_eff_plant)
 end
 
 """
@@ -91,13 +78,15 @@ function run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::Strin
     println()
     if @isdefined Distributed
         println("running $(length(hyper_cube.cases)) cases on $(nworkers()) workers")
-        @showprogress  pmap(case -> workflow_case(hyper_cube.df,case...), hyper_cube.cases)
+        results = @showprogress pmap(case -> workflow_case(case...), hyper_cube.cases)
     else
         println("running $(length(hyper_cube.cases)) cases serially")
-        @showprogress  map(case -> workflow_case(hyper_cube.df,case...), hyper_cube.cases)
+        results = @showprogress map(case -> workflow_case(case...), hyper_cube.cases)
     end
 
-    CSV.write(joinpath(save_folder,"BalanceOfPlantHypercubeN=$(length(hyper_cube.df.thermal_efficiency_cycle)).csv"), hyper_cube.df)
+    hyper_cube.df = DataFrame(results, [:cycle_type, :total_power, :breeder_heat_load, :diverter_heatload, :wall_heat_load, :thermal_efficiency_cycle, :thermal_efficiency_plant])
+
+    CSV.write(joinpath(save_folder,"BalanceOfPlantHypercubeN=$(length(hyper_cube.df.thermal_efficiency_plant)).csv"), hyper_cube.df)
 
     return hyper_cube
 end
