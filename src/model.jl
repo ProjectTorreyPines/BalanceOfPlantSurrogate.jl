@@ -7,7 +7,7 @@ mutable struct BOPSurogate
     thermal_efficiency
 end
 
-function BOPSurogate(cycle_type::Symbol;data::String="BalanceOfPlantHypercubeN=16.csv")
+function BOPSurogate(cycle_type::Symbol;data::String="BalanceOfPlantHypercubeN=3600.csv")
     df = DataFrames.DataFrame(CSV.File(joinpath(BalanceOfPlantSurogate.__BalanceOfPlantSurogate__,"data",data)))
     df = filter(row -> row.cycle_type == string(cycle_type), df)
 
