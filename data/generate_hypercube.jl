@@ -6,8 +6,8 @@ using ProgressMeter
 FUSE.logging(Logging.Info; actors=Logging.Error);
 
 mutable struct BalanceOfPlantHyperCubee
-    cases :: AbstractArray
-    df :: Union{DataFrames.DataFrame,Nothing}
+    cases::AbstractArray
+    df::Union{DataFrames.DataFrame,Nothing}
 end
 
 """
@@ -24,16 +24,14 @@ Initialize the balance of plant hypercube
                  |     |   (1 - div_fraciton)
                 div   wallexit()
 """
-function generate_hypercube(;var_steps::Int=2,cycle_types::Vector{Symbol}=[:rankine, :brayton],
-        power_range=(lower=1e6,upper=1e9),breeder_heat_load_fraction_range=(lower=0.5,upper=0.99),
-        divertor_heat_load_fraction_range=(lower=0.1,upper=0.9))
-    
-    
+function generate_hypercube(; var_steps::Int=2, cycle_types::Vector{Symbol}=[:rankine, :brayton],
+    power_range=(lower=1e6, upper=1e9), breeder_heat_load_fraction_range=(lower=0.5, upper=0.99),
+    divertor_heat_load_fraction_range=(lower=0.1, upper=0.9))
 
-    power_scan = log10range(power_range.lower,power_range.upper,var_steps)
-    breeder_scan = LinRange(breeder_heat_load_fraction_range.lower , breeder_heat_load_fraction_range.upper, var_steps)
-    diverter_scan = LinRange(divertor_heat_load_fraction_range.lower , divertor_heat_load_fraction_range.upper, var_steps)
-    
+    power_scan = log10range(power_range.lower, power_range.upper, var_steps)
+    breeder_scan = LinRange(breeder_heat_load_fraction_range.lower, breeder_heat_load_fraction_range.upper, var_steps)
+    diverter_scan = LinRange(divertor_heat_load_fraction_range.lower, divertor_heat_load_fraction_range.upper, var_steps)
+
     cases = collect(Iterators.product(cycle_types, power_scan, breeder_scan, diverter_scan))
     return BalanceOfPlantHyperCubee(cases, nothing)
 end
@@ -44,27 +42,27 @@ function log10range(start_value, stop_value, num_points)
 end
 
 
-function workflow_case(cycle_type::Symbol,total_power::Float64, bf::Float64, df::Float64)
+function workflow_case(cycle_type::Symbol, total_power::Float64, bf::Float64, df::Float64)
 
     dd = IMAS.dd()
-    act= FUSE.ParametersActors()
-    
+    act = FUSE.ParametersActors()
+
     bop = dd.balance_of_plant
 
     bop.time = [0.0]
     dd.global_time = 0.0
 
-    non_bf = 1. - bf
-    @ddtime(bop.power_plant.heat_load.breeder =bf * total_power)
+    non_bf = 1.0 - bf
+    @ddtime(bop.power_plant.heat_load.breeder = bf * total_power)
     @ddtime(bop.power_plant.heat_load.divertor = non_bf * total_power * df)
-    @ddtime (bop.power_plant.heat_load.wall = non_bf * total_power * (1. - df))
+    @ddtime (bop.power_plant.heat_load.wall = non_bf * total_power * (1.0 - df))
 
     act.ActorThermalPlant.model = :network
-    dd.balance_of_plant.power_plant.power_cycle_type = string(cycle_type)
-    FUSE.ActorThermalPlant(dd,act)
-   
-    thermal_eff_cycle = @ddtime (dd.balance_of_plant.thermal_efficiency_cycle)
-    thermal_eff_plant = @ddtime (dd.balance_of_plant.thermal_efficiency_plant)
+    bop.power_plant.power_cycle_type = string(cycle_type)
+    FUSE.ActorThermalPlant(dd, act)
+
+    thermal_eff_cycle = @ddtime (bop.thermal_efficiency_cycle)
+    thermal_eff_plant = @ddtime (bop.thermal_efficiency_plant)
 
     return (cycle_type, total_power, bf, df, 1 - df, thermal_eff_cycle, thermal_eff_plant)
 end
@@ -86,7 +84,7 @@ function run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::Strin
 
     hyper_cube.df = DataFrame(results, [:cycle_type, :total_power, :breeder_heat_load, :diverter_heatload, :wall_heat_load, :thermal_efficiency_cycle, :thermal_efficiency_plant])
 
-    CSV.write(joinpath(save_folder,"BalanceOfPlantHypercubeN=$(length(hyper_cube.df.thermal_efficiency_plant)).csv"), hyper_cube.df)
+    CSV.write(joinpath(save_folder, "BalanceOfPlantHypercubeN=$(length(hyper_cube.df.thermal_efficiency_plant)).csv"), hyper_cube.df)
 
     return hyper_cube
 end
