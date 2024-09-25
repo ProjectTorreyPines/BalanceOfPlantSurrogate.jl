@@ -1,10 +1,10 @@
 using Test
 using Pkg
-using BalanceOfPlantSurogate
+using BalanceOfPlantSurrogate
 
 using Pkg.activate(@__DIR__)
 
-@testset "BalanceOfPlantSurogate Tests" begin
+@testset "BalanceOfPlantSurrogate Tests" begin
     include(joinpath(@__DIR__,"generate_hypercube.jl"))
     hyper_cube = generate_hypercube()
     @assert !isempty(hyper_cube.cases)

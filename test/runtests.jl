@@ -1,9 +1,9 @@
 using Test
-using BalanceOfPlantSurogate
+using BalanceOfPlantSurrogate
 
-@testset "BalanceOfPlantSurogate" begin
+@testset "BalanceOfPlantSurrogate" begin
     for cycle in [:rankine, :brayton]
-        BOPSur = BalanceOfPlantSurogate.BOPSurogate(cycle)
-        @assert !isnan(BalanceOfPlantSurogate.predict_thermal_efficiency(BOPSur,1e7,0.9,0.1))
+        BOPSur = BalanceOfPlantSurrogate.BOPSurogate(cycle)
+        @assert !isnan(BalanceOfPlantSurrogate.predict_thermal_efficiency(BOPSur,1e7,0.9,0.1))
     end
 end

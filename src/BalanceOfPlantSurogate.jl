@@ -1,7 +1,7 @@
-module BalanceOfPlantSurogate
+module BalanceOfPlantSurrogate
 
-const __BalanceOfPlantSurogate__ = abspath(joinpath(@__DIR__, ".."))
+const __BalanceOfPlantSurrogate__ = abspath(joinpath(@__DIR__, ".."))
 
 include("model.jl")
 
-end # module BalanceOfPlantSurogate
+end # module BalanceOfPlantSurrogate

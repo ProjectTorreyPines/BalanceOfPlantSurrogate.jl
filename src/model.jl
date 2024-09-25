@@ -8,7 +8,7 @@ mutable struct BOPSurogate
 end
 
 function BOPSurogate(cycle_type::Symbol; data::String="BalanceOfPlantHypercubeN=10000.csv")
-    df = DataFrames.DataFrame(CSV.File(joinpath(BalanceOfPlantSurogate.__BalanceOfPlantSurogate__, "data", data)))
+    df = DataFrames.DataFrame(CSV.File(joinpath(BalanceOfPlantSurrogate.__BalanceOfPlantSurrogate__, "data", data)))
     df = filter(row -> row.cycle_type == string(cycle_type), df)
 
     sort!(df, [:diverter_heatload, :breeder_heat_load, :total_power])
