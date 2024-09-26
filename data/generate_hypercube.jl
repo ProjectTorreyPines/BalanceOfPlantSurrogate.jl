@@ -5,7 +5,7 @@ using ProgressMeter
 
 FUSE.logging(Logging.Info; actors=Logging.Error);
 
-mutable struct BalanceOfPlantHyperCubee
+mutable struct BalanceOfPlantHyperCube
     cases::AbstractArray
     df::Union{DataFrames.DataFrame,Nothing}
 end
@@ -18,11 +18,11 @@ end
 Initialize the balance of plant hypercube
 
     The power to each system is done like:
-        total_power 
-       |          | (1 - breeder_fraction)
-    breeder     div+wall
-                 |     |   (1 - div_fraciton)
-                div   wallexit()
+          total
+          |   | (1 - breeder_fraction)
+    breeder   div+wall
+              |      |   (1 - div_fraciton)
+            div      wall
 """
 function generate_hypercube(; var_steps::Int=2, cycle_types::Vector{Symbol}=[:rankine, :brayton],
     power_range=(lower=1e6, upper=1e9), breeder_heat_load_fraction_range=(lower=0.5, upper=0.99),
@@ -30,10 +30,10 @@ function generate_hypercube(; var_steps::Int=2, cycle_types::Vector{Symbol}=[:ra
 
     power_scan = log10range(power_range.lower, power_range.upper, var_steps)
     breeder_scan = LinRange(breeder_heat_load_fraction_range.lower, breeder_heat_load_fraction_range.upper, var_steps)
-    diverter_scan = LinRange(divertor_heat_load_fraction_range.lower, divertor_heat_load_fraction_range.upper, var_steps)
+    divertor_scan = LinRange(divertor_heat_load_fraction_range.lower, divertor_heat_load_fraction_range.upper, var_steps)
 
-    cases = collect(Iterators.product(cycle_types, power_scan, breeder_scan, diverter_scan))
-    return BalanceOfPlantHyperCubee(cases, nothing)
+    cases = collect(Iterators.product(cycle_types, power_scan, breeder_scan, divertor_scan))
+    return BalanceOfPlantHyperCube(cases, nothing)
 end
 
 
@@ -42,7 +42,7 @@ function log10range(start_value, stop_value, num_points)
 end
 
 
-function workflow_case(cycle_type::Symbol, total_power::Float64, bf::Float64, df::Float64)
+function workflow_case(cycle_type::Symbol, total_heat_load::Float64, bf::Float64, df::Float64)
 
     dd = IMAS.dd()
     act = FUSE.ParametersActors()
@@ -53,9 +53,9 @@ function workflow_case(cycle_type::Symbol, total_power::Float64, bf::Float64, df
     dd.global_time = 0.0
 
     non_bf = 1.0 - bf
-    @ddtime(bop.power_plant.heat_load.breeder = bf * total_power)
-    @ddtime(bop.power_plant.heat_load.divertor = non_bf * total_power * df)
-    @ddtime (bop.power_plant.heat_load.wall = non_bf * total_power * (1.0 - df))
+    @ddtime(bop.power_plant.heat_load.breeder = bf * total_heat_load)
+    @ddtime(bop.power_plant.heat_load.divertor = non_bf * total_heat_load * df)
+    @ddtime(bop.power_plant.heat_load.wall = non_bf * total_heat_load * (1.0 - df))
 
     act.ActorThermalPlant.model = :network
     bop.power_plant.power_cycle_type = string(cycle_type)
@@ -64,15 +64,15 @@ function workflow_case(cycle_type::Symbol, total_power::Float64, bf::Float64, df
     thermal_eff_cycle = @ddtime (bop.thermal_efficiency_cycle)
     thermal_eff_plant = @ddtime (bop.thermal_efficiency_plant)
 
-    return (cycle_type, total_power, bf, df, 1 - df, thermal_eff_cycle, thermal_eff_plant)
+    return (cycle_type, total_heat_load, bf, df, 1 - df, thermal_eff_cycle, thermal_eff_plant)
 end
 
 """
-    run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::String)
+    run_hypercube!(hyper_cube::BalanceOfPlantHyperCube, save_folder::String)
 
 Runs the hypercube with pmap or map depending if you loaded Distributed
 """
-function run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::String)
+function run_hypercube!(hyper_cube::BalanceOfPlantHyperCube, save_folder::String)
     println()
     if @isdefined Distributed
         println("running $(length(hyper_cube.cases)) cases on $(nworkers()) workers")
@@ -82,7 +82,7 @@ function run_hypercube!(hyper_cube::BalanceOfPlantHyperCubee, save_folder::Strin
         results = @showprogress map(case -> workflow_case(case...), hyper_cube.cases)
     end
 
-    hyper_cube.df = DataFrame(results, [:cycle_type, :total_power, :breeder_heat_load, :diverter_heatload, :wall_heat_load, :thermal_efficiency_cycle, :thermal_efficiency_plant])
+    hyper_cube.df = DataFrame(results, [:cycle_type, :total_heat_load, :breeder_heat_load, :divertor_heat_load, :wall_heat_load, :thermal_efficiency_cycle, :thermal_efficiency_plant])
 
     CSV.write(joinpath(save_folder, "BalanceOfPlantHypercubeN=$(length(hyper_cube.df.thermal_efficiency_plant)).csv"), hyper_cube.df)
 

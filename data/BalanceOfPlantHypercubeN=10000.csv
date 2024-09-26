@@ -1,4 +1,4 @@
-cycle_type,total_power,breeder_heat_load,diverter_heatload,wall_heat_load,thermal_efficiency_cycle,thermal_efficiency_plant
+cycle_type,total_heat_load,breeder_heat_load,divertor_heat_load,wall_heat_load,thermal_efficiency_cycle,thermal_efficiency_plant
 rankine,1.0e6,0.5,0.1,0.9,0.34485874925643367,-0.26997501163143856
 brayton,1.0e6,0.5,0.1,0.9,0.2700486923198959,-40.76786315148315
 rankine,1.189841695416561e6,0.5,0.1,0.9,0.3460169377369303,-0.18345760358642882
