@@ -9,7 +9,7 @@ using BalanceOfPlantSurrogate
         divertor_heat_load = 1E6
         wall_heat_load = 1E6
 
-        res1 = BalanceOfPlantSurrogate.predict_thermal_efficiency(BOP, breeder_heat_load, divertor_heat_load, wall_heat_load)
+        res1 = BalanceOfPlantSurrogate.thermal_efficiency(BOP, breeder_heat_load, divertor_heat_load, wall_heat_load)
         @test !isnan(res1)
 
         res2 = BOP(breeder_heat_load, divertor_heat_load, wall_heat_load)

@@ -61,8 +61,8 @@ function workflow_case(cycle_type::Symbol, total_heat_load::Float64, bf::Float64
     bop.power_plant.power_cycle_type = string(cycle_type)
     FUSE.ActorThermalPlant(dd, act)
 
-    thermal_eff_cycle = @ddtime (bop.thermal_efficiency_cycle)
-    thermal_eff_plant = @ddtime (bop.thermal_efficiency_plant)
+    thermal_eff_cycle = @ddtime(bop.thermal_efficiency_cycle)
+    thermal_eff_plant = @ddtime(bop.thermal_efficiency_plant)
 
     return (cycle_type, total_heat_load, bf, df, 1 - df, thermal_eff_cycle, thermal_eff_plant)
 end

@@ -1,4 +1,4 @@
-# BalanceOfPlantSurrogate
+# BalanceOfPlantSurrogate.jl
 
 The BalanceOfPlantSurrogate is a surogate model to the FUSE.ActorBalanceOfPlant actor in FUSE, this is done by simple interpolate/extrapolate of a hypercube.
 
