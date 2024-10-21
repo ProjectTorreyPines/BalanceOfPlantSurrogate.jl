@@ -18,7 +18,7 @@ end
 
 makedocs(;
     modules=[BalanceOfPlantSurrogate],
-    format=Documenter.HTML(),
+    format=Documenter.HTML(;analytics="G-65D8V8C8VQ"),
     sitename="BalanceOfPlantSurrogate",
     checkdocs=:none,
     pages=["index.md", "api.md", "License" => "license.md", "Notice" => "notice.md"]
