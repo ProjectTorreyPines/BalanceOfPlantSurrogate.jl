@@ -2,7 +2,7 @@ using Test
 using Pkg
 using BalanceOfPlantSurrogate
 
-using Pkg.activate(@__DIR__)
+Pkg.activate(@__DIR__)
 
 @testset "BalanceOfPlantSurrogate Tests" begin
     include(joinpath(@__DIR__,"generate_hypercube.jl"))
