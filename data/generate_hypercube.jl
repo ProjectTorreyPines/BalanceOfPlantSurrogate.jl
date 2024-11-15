@@ -36,14 +36,11 @@ function generate_hypercube(; var_steps::Int=2, cycle_types::Vector{Symbol}=[:ra
     return BalanceOfPlantHyperCube(cases, nothing)
 end
 
-
 function log10range(start_value, stop_value, num_points)
     return 10 .^ LinRange(log10(start_value), log10(stop_value), num_points)
 end
 
-
 function workflow_case(cycle_type::Symbol, total_heat_load::Float64, bf::Float64, df::Float64)
-
     dd = IMAS.dd()
     act = FUSE.ParametersActors()
 

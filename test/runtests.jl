@@ -3,7 +3,7 @@ using BalanceOfPlantSurrogate
 
 @testset "BalanceOfPlantSurrogate" begin
     for cycle in [:rankine, :brayton]
-        BOP = BalanceOfPlantSurrogate.BOPSurogate(cycle)
+        BOP = BalanceOfPlantSurrogate.BOPsurrogate(cycle)
 
         breeder_heat_load = 1E7
         divertor_heat_load = 1E6
