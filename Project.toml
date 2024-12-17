@@ -1,7 +1,7 @@
 name = "BalanceOfPlantSurrogate"
 uuid = "001e48cb-5a1e-4e3c-a5d4-cdc3aa14f3de"
 authors = ["TimSlendebroek <32385057+TimSlendebroek@users.noreply.github.com>"]
-version = "3.0.0"
+version = "3.0.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
